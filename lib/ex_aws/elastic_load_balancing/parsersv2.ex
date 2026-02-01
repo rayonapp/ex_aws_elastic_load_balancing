@@ -112,6 +112,18 @@ if Code.ensure_loaded?(SweetXml) do
       {:ok, Map.put(resp, :body, parsed_body)}
     end
 
+    def parse({:ok, %{body: xml} = resp}, :describe_listeners) do
+      parsed_body =
+        xml
+        |> SweetXml.xpath(
+          ~x"//DescribeListenersResponse",
+          listeners: listeners_xml_description(),
+          request_id: ~x"./ResponseMetadata/RequestId/text()"s
+        )
+
+      {:ok, Map.put(resp, :body, parsed_body)}
+    end
+
     def parse(val, _), do: val
 
     defp load_balancers_xml_description do
@@ -205,6 +217,27 @@ if Code.ensure_loaded?(SweetXml) do
         ~x"./ModifyLoadBalancerAttributesResult/Attributes/member"l,
         key: ~x"./Key/text()"s,
         value: ~x"./Value/text()"s
+      ]
+    end
+
+    defp listeners_xml_description do
+      [
+        ~x"./DescribeListenersResult/Listeners/member"l,
+        listener_arn: ~x"./ListenerArn/text()"s,
+        load_balancer_arn: ~x"./LoadBalancerArn/text()"s,
+        port: ~x"./Port/text()"s,
+        protocol: ~x"./Protocol/text()"s,
+        ssl_policy: ~x"./SslPolicy/text()"s,
+        certificates: [
+          ~x"./Certificates/member"l,
+          certificate_arn: ~x"./CertificateArn/text()"s,
+          is_default: ~x"./IsDefault/text()"s
+        ],
+        default_actions: [
+          ~x"./DefaultActions/member"l,
+          type: ~x"./Type/text()"s,
+          target_group_arn: ~x"./TargetGroupArn/text()"s
+        ]
       ]
     end
   end
